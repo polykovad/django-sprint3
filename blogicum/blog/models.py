@@ -3,55 +3,64 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+TITLE_MAX_LENGTH = 256
+STR_MAX_LENGTH = 20
 
-class Category(models.Model):
-    title = models.CharField('Заголовок', max_length=256)
+
+class BaseModel(models.Model):
+    is_published = models.BooleanField(
+        'Опубликовано',
+        default=True,
+        help_text='Снимите галочку, чтобы скрыть публикацию.'
+    )
+    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+
+class Category(BaseModel):
+    title = models.CharField('Заголовок', max_length=TITLE_MAX_LENGTH)
     description = models.TextField('Описание')
     slug = models.SlugField(
         'Идентификатор',
         unique=True,
-        help_text='Идентификатор страницы для URL; разрешены символы '
-                  'латиницы, цифры, дефис и подчёркивание.'
+        help_text=(
+            'Идентификатор страницы для URL; разрешены символы '
+            'латиницы, цифры, дефис и подчёркивание.'
+        )
     )
-    is_published = models.BooleanField(
-        'Опубликовано',
-        default=True,
-        help_text='Снимите галочку, чтобы скрыть публикацию.'
-    )
-    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
 
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
+        default_related_name = 'categories'
 
     def __str__(self):
-        return self.title
+        return self.title[:STR_MAX_LENGTH]
 
 
-class Location(models.Model):
-    name = models.CharField('Название места', max_length=256)
-    is_published = models.BooleanField(
-        'Опубликовано',
-        default=True,
-        help_text='Снимите галочку, чтобы скрыть публикацию.'
-    )
-    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
+class Location(BaseModel):
+    name = models.CharField('Название места', max_length=TITLE_MAX_LENGTH)
 
     class Meta:
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
+        default_related_name = 'locations'
 
     def __str__(self):
-        return self.name
+        return self.name[:STR_MAX_LENGTH]
 
 
-class Post(models.Model):
-    title = models.CharField('Заголовок', max_length=256)
+class Post(BaseModel):
+    title = models.CharField('Заголовок', max_length=TITLE_MAX_LENGTH)
     text = models.TextField('Текст')
     pub_date = models.DateTimeField(
         'Дата и время публикации',
-        help_text='Если установить дату и время в будущем — '
-                  'можно делать отложенные публикации.'
+        help_text=(
+            'Если установить дату и время в будущем — '
+            'можно делать отложенные публикации.'
+        )
     )
     author = models.ForeignKey(
         User,
@@ -71,16 +80,12 @@ class Post(models.Model):
         null=True,
         verbose_name='Категория',
     )
-    is_published = models.BooleanField(
-        'Опубликовано',
-        default=True,
-        help_text='Снимите галочку, чтобы скрыть публикацию.'
-    )
-    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
 
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
+        default_related_name = 'posts'
+        ordering = ('-pub_date',)
 
     def __str__(self):
-        return self.title
+        return self.title[:STR_MAX_LENGTH]
